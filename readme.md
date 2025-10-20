@@ -1,4 +1,4 @@
-![Home Page](images/job_home.png)
-![signup Page](images/job_signup.png)
-![login Page](images/job_login.png)
-![jobs and internships Page](images/job_jobs.png)
+![Home Page](images/job_home.PNG)
+![signup Page](images/job_signup.PNG)
+![login Page](images/job_login.PNG)
+![jobs and internships Page](images/job_jobs.PNG)
