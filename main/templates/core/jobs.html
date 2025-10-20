@@ -1,0 +1,65 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Find Jobs{% endblock %}
+
+{% block content %}
+<div class="jobs-page">
+    <!-- Hero Section with Search Bar -->
+    <section class="jobs-hero">
+        <div class="container">
+            <div class="hero-text">
+                <h1>Get The Right Job You Deserve</h1>
+                <p>1,80,570 jobs listed here! Your dream job is waiting.</p>
+            </div>
+            <div class="search-bar-container">
+                <form class="search-form">
+                    <div class="search-input-group">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" placeholder="Job title or keyword">
+                    </div>
+                    <div class="search-input-group">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <input type="text" placeholder="Dhangadhi, Nepal">
+                    </div>
+                    <button type="submit" class="search-btn">Search</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content Area -->
+    <main class="container jobs-content">
+        <!-- Featured Jobs Section -->
+        <section class="jobs-section">
+            <div class="section-header">
+                <h2>Featured Jobs</h2>
+                <!-- <a href="#" class="see-all-link">See All Jobs</a> -->
+            </div>
+            <div class="job-grid">
+                {% if jobs %}
+                {% for job in jobs %}
+                <div class="job-card-listing">
+                    <div class="card-top">
+                        <!-- <div class="company-logo" style="background-color: #EBF5FF;"></div> -->
+                        <h4>{{ job.title }}</h4>
+                    </div>
+                    <p class="company-name">{{ job.company }}</p>
+                    <div class="tags">
+                        <span><i class="fa-solid fa-location-dot"></i> {{ job.location }}{% if job.country %}, {{ job.country }}{% endif %}</span>
+                    </div>
+                    <div class="card-bottom">
+                        <a href="{{ job.url }}" class="apply-btn" target="_blank" rel="noopener">Apply</a>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p>No jobs found.</p>
+                {% endif %}
+            </div>
+        </section>
+    </main>
+</div>
+{% endblock %}
+
+

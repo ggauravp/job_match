@@ -1,0 +1,64 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+{% block title %}JobMatch - Get Matched With Your Dream Job{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-container container">
+        <div class="hero-content">
+            <h1>Stop Getting Ghosted. <br> Start Getting Offers.</h1>
+            <p>Get instantly matched with jobs that value your skills.</p>
+            <div class="hero-cta">
+                <a href="#" class="btn btn-secondary-solid">Log In</a>
+                <a href="{% url 'main:signup' %}" class="btn btn-primary-yellow">Sign UP -></a>
+            </div>
+        </div>
+        <div class="hero-image-area">
+            <div class="card notification-card">
+                <i class="fa-solid fa-envelope"></i>
+                <img src="https://logo.clearbit.com/ebay.com" alt="eBay Logo">
+                <p>You've got role matches!</p>
+            </div>
+
+            <div class="card job-card job-card-1">
+                <div class="card-header">
+                    <h4>Junior Front End Developer</h4>
+                </div>
+                <div class="card-body">
+                    <p><i class="fa-solid fa-briefcase"></i> Full-time &middot; Hybrid</p>
+                    <p><i class="fa-solid fa-location-dot"></i> Lalitpur, Nepal</p>
+                    <p><i class="fa-solid fa-car"></i> Automotive</p>
+                    <p><i class="fa-solid fa-code"></i> Software Development</p>
+                    <p><i class="fa-solid fa-dollar-sign"></i> Rs 35,000</p>
+                </div>
+            </div>
+
+            <div class="card job-card job-card-2">
+                 <div class="card-header">
+                    <h4>Java Intern</h4>
+                </div>
+                <div class="card-body">
+                    <p><i class="fa-solid fa-briefcase"></i> Full-time &middot; Hybrid</p>
+                    <p><i class="fa-solid fa-location-dot"></i> Kathmandu, Nepal</p>
+                    <p><i class="fa-solid fa-car"></i> Automotive</p>
+                    <p><i class="fa-solid fa-code"></i> Software Development</p>
+                    <p><i class="fa-solid fa-dollar-sign"></i> Rs 18,000 </p>
+                </div>
+            </div>
+
+            <!-- <div class="card main-browser-card"> -->
+                <div class="browser-header">
+                    <span></span><span></span><span></span>
+                </div>
+                <div class="browser-body">
+                    <p class="logo-text">JOBMATCH</p>
+                    <img src="https://logo.clearbit.com/ebay.com" alt="Company Logo">
+                    <p class="company-name">ebay</p>
+                </div>
+            <!-- </div> -->
+        </div>
+    </div>
+</section>
+
+{% endblock %}
