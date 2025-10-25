@@ -1,11 +1,6 @@
 from django.db import models
 import os
 
-class Candidate(models.Model):
-    name = models.CharField(max_length=100)
-    email = models.EmailField(unique=True)
-    password = models.CharField(max_length=100)
-
 class JobResume(models.Model):
     name = models.CharField(max_length=100)
     resume = models.FileField(upload_to='resumes/')
@@ -30,5 +25,6 @@ class Job(models.Model):
     url = models.URLField()
     description = models.TextField(null=True, blank=True)
     country = models.CharField(max_length=50, null=True, blank=True)
+    deadline = models.CharField(max_length=100, null=True, blank=True)
     adzuna_id = models.CharField(max_length=100, unique=True)
 

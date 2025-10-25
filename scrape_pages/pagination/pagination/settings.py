@@ -1,4 +1,4 @@
-# Scrapy settings for jobspider project
+# Scrapy settings for pagination project
 #
 # For simplicity, this file contains only settings considered important or
 # commonly used. You can find more settings consulting the documentation:
@@ -7,16 +7,16 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = "jobspider"
+BOT_NAME = "pagination"
 
-SPIDER_MODULES = ["jobspider.spiders"]
-NEWSPIDER_MODULE = "jobspider.spiders"
+SPIDER_MODULES = ["pagination.spiders"]
+NEWSPIDER_MODULE = "pagination.spiders"
 
 ADDONS = {}
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = "jobspider (+http://www.yourdomain.com)"
+#USER_AGENT = "pagination (+http://www.yourdomain.com)"
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
@@ -41,13 +41,13 @@ DOWNLOAD_DELAY = 1
 # Enable or disable spider middlewares
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 #SPIDER_MIDDLEWARES = {
-#    "jobspider.middlewares.JobspiderSpiderMiddleware": 543,
+#    "pagination.middlewares.PaginationSpiderMiddleware": 543,
 #}
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #DOWNLOADER_MIDDLEWARES = {
-#    "jobspider.middlewares.JobspiderDownloaderMiddleware": 543,
+#    "pagination.middlewares.PaginationDownloaderMiddleware": 543,
 #}
 
 # Enable or disable extensions
@@ -59,7 +59,7 @@ DOWNLOAD_DELAY = 1
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-   "jobspider.pipelines.PostgresJobPipeline": 300,
+   "pagination.pipelines.JobPipeline": 300,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
