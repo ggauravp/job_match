@@ -5,45 +5,53 @@
 
 {% block content %}
 <div class="jobs-page">
-    <!-- Hero Section with Search Bar -->
     <section class="jobs-hero">
         <div class="container">
             <div class="hero-text">
                 <h1>Get The Right Job You Deserve</h1>
-                <p>1,80,570 jobs listed here! Your dream job is waiting.</p>
+                <p>Thousands of jobs listed here! Your dream job is waiting.</p>
             </div>
-            <div class="search-bar-container">
-                <form class="search-form">
-                    <div class="search-input-group">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" placeholder="Job title or keyword">
-                    </div>
-                    <div class="search-input-group">
-                        <i class="fa-solid fa-location-dot"></i>
-                        <input type="text" placeholder="Dhangadhi, Nepal">
-                    </div>
-                    <button type="submit" class="search-btn">Search</button>
-                </form>
+
+            {% if user.is_authenticated %}
+            <div class="resume-upload-section">
+                {% if messages %}
+                <div class="messages-container">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="upload-container">
+                    <h3>Upload Your Resume</h3>
+                    <p>Upload your resume to get better job matches</p>
+                    <form method="POST" enctype="multipart/form-data" class="resume-upload-form">
+                        {% csrf_token %}
+                        <div class="file-upload-wrapper">
+                            <input type="file" id="resume-file" name="resume" accept=".pdf" required>
+                            <label for="resume-file" class="file-upload-btn">
+                                <i class="fa-solid fa-upload"></i> Choose PDF Resume
+                            </label>
+                            <span class="file-name">No file selected</span>
+                        </div>
+                        <button type="submit" class="upload-btn" disabled>
+                            <i class="fa-solid fa-cloud-upload-alt"></i> Upload Resume
+                        </button>
+                    </form>
+                </div>
             </div>
+            {% endif %}
         </div>
     </section>
 
-    <!-- Main Content Area -->
     <main class="container jobs-content">
-        <!-- Featured Jobs Section -->
         <section class="jobs-section">
-            <div class="section-header">
-                <h2>Featured Jobs</h2>
-                <!-- <a href="#" class="see-all-link">See All Jobs</a> -->
-            </div>
+            <div class="section-header"><h2>Featured Jobs</h2></div>
             <div class="job-grid">
                 {% if jobs %}
                 {% for job in jobs %}
                 <div class="job-card-listing">
-                    <div class="card-top">
-                        <!-- <div class="company-logo" style="background-color: #EBF5FF;"></div> -->
-                        <h4>{{ job.title }}</h4>
-                    </div>
+                    <div class="card-top"><h4>{{ job.title }}</h4></div>
                     <p class="company-name">{{ job.company }}</p>
                     <div class="tags">
                         <span><i class="fa-solid fa-location-dot"></i> {{ job.location }}{% if job.country %}, {{ job.country }}{% endif %}</span>
@@ -60,6 +68,38 @@
         </section>
     </main>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('resume-file');
+    const fileName = document.querySelector('.file-name');
+    const uploadBtn = document.querySelector('.upload-btn');
+    const fileUploadBtn = document.querySelector('.file-upload-btn');
+    const form = document.querySelector('.resume-upload-form');
+
+    if (fileInput && fileName && uploadBtn && form && fileUploadBtn) {
+        // Enable button after selecting file
+        fileInput.addEventListener('change', function() {
+            const file = fileInput.files[0];
+            if (file) {
+                fileName.textContent = file.name;
+                fileName.style.color = '#10b981';
+                fileUploadBtn.classList.add('file-upload-success');
+                uploadBtn.disabled = false;
+            } else {
+                fileName.textContent = 'No file selected';
+                fileName.style.color = '#e5e7eb';
+                fileUploadBtn.classList.remove('file-upload-success');
+                uploadBtn.disabled = true;
+            }
+        });
+
+        // Show uploading spinner
+        form.addEventListener('submit', function() {
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
+        });
+    }
+});
+</script>
 {% endblock %}
-
-

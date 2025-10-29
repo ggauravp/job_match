@@ -8,6 +8,7 @@ app_name = 'main'
 urlpatterns = [
     path('', views.home_page, name='home'), 
     path('signup/', views.signup, name='signup'),
-    path('login/', auth_views.LoginView.as_view(template_name='core/login.html', authentication_form=loginform), name='login'),
+    path('login/', auth_views.LoginView.as_view(template_name='core/login.html', authentication_form=loginform, next_page='main:home'), name='login'),
+    path('logout/', views.custom_logout, name='logout'),
     path('jobs/', views.jobs, name='jobs'),
     ]

@@ -17,14 +17,18 @@
         <nav class="container">
             <a href="/" class="logo">JOBMATCH</a>
             <ul class="nav-links">
-                <li><a href="/">Home </a></li>
-                <li><a href="#">About Us </a></li>
-                <li><a href="{% url 'main:jobs' %}">Jobs & Internships </a></li>
-                <li><a href="#">Give Us Feedback</a></li>
+                <li><a href="/" class="{% if current_page == 'home' %}active{% endif %}">Home </a></li>
+                <li><a href="#" class="{% if current_page == 'about' %}active{% endif %}">About Us </a></li>
+                <li><a href="{% url 'main:jobs' %}" class="{% if current_page == 'jobs' %}active{% endif %}">Jobs & Internships </a></li>
+                <li><a href="#" class="{% if current_page == 'feedback' %}active{% endif %}">Give Us Feedback</a></li>
             </ul>
             <div class="nav-buttons">
-                <!-- <a href="#" class="btn btn-secondary">Log In</a> -->
-                <!-- <a href="#" class="btn btn-primary">Sign Up</a> -->
+                {% if user.is_authenticated %}
+                    <span class="welcome-text">Welcome, {{ user.username }}!</span>
+                    <a href="{% url 'main:logout' %}" class="btn btn-secondary">Logout</a>
+                {% else %}
+                    <span class="welcome-text">Welcome, Guest!</span>
+                {% endif %}
             </div>
         </nav>
     </header>

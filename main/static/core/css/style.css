@@ -8,8 +8,6 @@
     --white: #ffffff;
     --text-light: #e5e7eb;
 }
-
-
 /* --- General Setup --- */
 * {
     margin: 0;
@@ -81,6 +79,15 @@ nav {
     background-color: rgba(255, 255, 255, 0.1); /* Semi-transparent white background */
 }
 
+/* Active page indicator - subtle and elegant */
+.nav-links a.active {
+    color: var(--white);
+    background-color: rgba(255, 255, 255, 0.25);
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
 .btn {
     padding: 0.75rem 1.5rem;
     border-radius: 8px;
@@ -102,6 +109,39 @@ nav {
 .btn-primary:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Header welcome text - smaller */
+.nav-buttons .welcome-text {
+    color: var(--white);
+    font-weight: 500;
+    margin-right: 1rem;
+    font-size: 0.9rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Hero content welcome text - bigger and yellow */
+.hero-content .welcome-text {
+    color: var(--accent-yellow);
+    font-weight: 700;
+    font-size: 1.5rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    margin-bottom: 1rem;
+    display: block;
+}
+
+/* Logout button - yellow like signup button */
+.nav-buttons .btn-secondary {
+    background-color: var(--accent-yellow);
+    color: var(--dark-gray);
+    border: 1px solid var(--accent-yellow);
+}
+
+.nav-buttons .btn-secondary:hover {
+    background-color: #f59e0b;
+    color: var(--dark-gray);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(250, 204, 21, 0.3);
 }
 
 
@@ -493,6 +533,37 @@ body:has(.signup-page-container) footer {
     margin-top: 0 !important;
 }
 
+/* Messages styling for login/signup pages */
+.signup-page-container .messages-container {
+    margin-bottom: 1rem;
+}
+
+.signup-page-container .alert {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.signup-page-container .alert-success {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid #10b981;
+    color: #10b981;
+}
+
+.signup-page-container .alert-error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid #ef4444;
+    color: #ef4444;
+}
+
+.signup-page-container .alert-info {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid #3b82f6;
+    color: #3b82f6;
+}
+
 
 
 /* === ADD THIS CSS TO THE END OF YOUR EXISTING style.css FILE === */
@@ -795,6 +866,171 @@ body:has(.signup-page-container) footer {
     }
 }
 /* === END: Jobs Page CSS === */
+
+/* --- Resume Upload Styles --- */
+.resume-upload-section {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+}
+
+.messages-container {
+    margin-bottom: 1rem;
+    width: 100%;
+    max-width: 500px;
+}
+
+.alert {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.alert-success {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid #10b981;
+    color: #10b981;
+}
+
+.alert-error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid #ef4444;
+    color: #ef4444;
+}
+
+.alert-info {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid #3b82f6;
+    color: #3b82f6;
+}
+
+.upload-container {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    max-width: 500px;
+    width: 100%;
+}
+
+.upload-container h3 {
+    color: var(--white);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.upload-container p {
+    color: var(--text-light);
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+
+.resume-upload-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.file-upload-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.file-input {
+    display: none;
+}
+
+.file-upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px dashed rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    color: var(--white);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.file-upload-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: var(--accent-yellow);
+    color: var(--accent-yellow);
+}
+
+.file-name {
+    color: var(--text-light);
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+.upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 2rem;
+    background: var(--accent-yellow);
+    color: var(--dark-gray);
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+}
+
+.upload-btn:hover {
+    background: #f59e0b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(250, 204, 21, 0.3);
+}
+
+.upload-btn:disabled {
+    background: #6b7280;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* File upload success/error states */
+.file-upload-success {
+    border-color: #10b981 !important;
+    background: rgba(16, 185, 129, 0.1) !important;
+}
+
+.file-upload-error {
+    border-color: #ef4444 !important;
+    background: rgba(239, 68, 68, 0.1) !important;
+}
+
+/* Responsive design for upload section */
+@media (max-width: 768px) {
+    .upload-container {
+        padding: 1.5rem;
+        margin: 0 1rem;
+    }
+    
+    .upload-container h3 {
+        font-size: 1.25rem;
+    }
+    
+    .file-upload-btn,
+    .upload-btn {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.9rem;
+    }
+}
 
 /* --- Footer Styles --- */
 footer {

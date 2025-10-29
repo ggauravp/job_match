@@ -10,8 +10,12 @@
             <h1>Stop Getting Ghosted. <br> Start Getting Offers.</h1>
             <p>Get instantly matched with jobs that value your skills.</p>
             <div class="hero-cta">
-                <a href="#" class="btn btn-secondary-solid">Log In</a>
-                <a href="{% url 'main:signup' %}" class="btn btn-primary-yellow">Sign UP -></a>
+                {% if user.is_authenticated %}
+                    <span class="welcome-text">Welcome {{ user.username }}<br> Find The Job You Deserve!</span>
+                {% else %}
+                    <a href="{% url 'main:login' %}" class="btn btn-secondary-solid">Log In</a>
+                    <a href="{% url 'main:signup' %}" class="btn btn-primary-yellow">Sign UP -></a>
+                {% endif %}
             </div>
         </div>
         <div class="hero-image-area">

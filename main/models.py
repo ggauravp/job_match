@@ -1,22 +1,27 @@
 from django.db import models
+from django.contrib.auth.models import User
 import os
+from django.utils import timezone
 
 class JobResume(models.Model):
-    name = models.CharField(max_length=100)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     resume = models.FileField(upload_to='resumes/')
-    resume_text = models.TextField()
+    resume_text = models.TextField(blank=True)
+    uploaded_at = models.DateTimeField(default=timezone.now)
 
     def save(self, *args, **kwargs):
+        # Delete old resume file when user uploads a new one
         try:
-            # check if updating an existing record
             old = JobResume.objects.get(pk=self.pk)
             if old.resume and old.resume != self.resume:
                 if os.path.isfile(old.resume.path):
-                    os.remove(old.resume.path)  # delete old file
+                    os.remove(old.resume.path)
         except JobResume.DoesNotExist:
-            pass  # new record, nothing to delete
-
+            pass
         super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.user.username}'s Resume"
 
 class Job(models.Model):
     title = models.CharField(max_length=200)
