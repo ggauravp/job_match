@@ -20,7 +20,7 @@
                 <li><a href="/" class="{% if current_page == 'home' %}active{% endif %}">Home </a></li>
                 <li><a href="#" class="{% if current_page == 'about' %}active{% endif %}">About Us </a></li>
                 <li><a href="{% url 'main:jobs' %}" class="{% if current_page == 'jobs' %}active{% endif %}">Jobs & Internships </a></li>
-                <li><a href="#" class="{% if current_page == 'feedback' %}active{% endif %}">Give Us Feedback</a></li>
+                <li><a href="#" class="{% if current_page == 'feedback' %}active{% endif %}">Top Jobs</a></li>
             </ul>
             <div class="nav-buttons">
                 {% if user.is_authenticated %}

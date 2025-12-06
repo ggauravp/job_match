@@ -564,15 +564,6 @@ body:has(.signup-page-container) footer {
     color: #3b82f6;
 }
 
-
-
-/* === ADD THIS CSS TO THE END OF YOUR EXISTING style.css FILE === */
-
-/* --- Jobs Page Specific Styles --- */
-/* === START: Jobs Page CSS (Replace old jobs page styles with this) === */
-
-/* === START: Jobs Page CSS (Replace old jobs page styles with this) === */
-/* === START: Jobs Page CSS (Replace old jobs page styles with this) === */
 /* --- Jobs Page Specific Styles --- */
 .jobs-page body {
     background: #F8F9FA;
@@ -882,6 +873,10 @@ body:has(.signup-page-container) footer {
     max-width: 500px;
 }
 
+#resume-file {
+    display: none;
+}
+
 .alert {
     padding: 0.75rem 1rem;
     border-radius: 8px;
@@ -1182,4 +1177,3 @@ footer {
         font-size: 0.9rem;
     }
 }
-

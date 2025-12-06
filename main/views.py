@@ -1,12 +1,13 @@
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from .forms import SignupForm
 from django.shortcuts import redirect
-from .models import Job, JobResume
+from .models import Job, JobResume, JobRating
 from django.contrib import messages
 from django.contrib.auth import logout
 import PyPDF2
 import io
+from django.db.models import Q
 
 def home_page(request):
     return render(request, 'core/home.html', {'current_page': 'home'})
@@ -27,29 +28,32 @@ def signup(request):
         'current_page': 'signup'
     })
 
-from django.shortcuts import render
-from django.contrib import messages
-from .models import Job, JobResume
-import PyPDF2
-
-from django.shortcuts import render
-from django.contrib import messages
-from .models import Job, JobResume
-import PyPDF2
-
-from django.shortcuts import render
-from django.contrib import messages
-from .models import Job, JobResume
-import PyPDF2
 
 def jobs(request):
-    jobs_queryset = Job.objects.all().order_by('-id')
-    
+    jobs_queryset = Job.objects.all()
+
+    # Search functionality
+    query = request.GET.get('q')
+    if query:
+        jobs_queryset = jobs_queryset.filter(
+            Q(title__icontains=query) 
+        )
+
+    jobs_queryset = jobs_queryset.order_by('?')[:20]
+
+    # Attach user rating if logged in
+    for job in jobs_queryset:
+        job.user_rating = None
+        if request.user.is_authenticated:
+            rating = JobRating.objects.filter(job=job, user=request.user).first()
+            if rating:
+                job.user_rating = rating.stars
+
     # Welcome message
     if request.user.is_authenticated and not request.session.get('welcome_shown'):
         messages.info(request, f'Welcome back, {request.user.username}! Upload your resume to get better job matches.')
         request.session['welcome_shown'] = True
-    
+
     # Handle resume upload
     if request.method == 'POST' and 'resume' in request.FILES:
         if request.user.is_authenticated:
@@ -60,8 +64,7 @@ def jobs(request):
                     resume_text = ""
                     for page in pdf_reader.pages:
                         resume_text += page.extract_text() or ""
-                    
-                    # Save or update resume
+
                     JobResume.objects.update_or_create(
                         user=request.user,
                         defaults={
@@ -74,9 +77,7 @@ def jobs(request):
                     messages.error(request, f'Error processing PDF: {str(e)}')
             else:
                 messages.error(request, 'Please upload a valid PDF file.')
-        else:
-            messages.error(request, 'You must be logged in to upload a resume.')
-    
+
     return render(request, 'core/jobs.html', {
         'jobs': jobs_queryset,
         'current_page': 'jobs'
@@ -90,3 +91,27 @@ def custom_logout(request):
     logout(request)
     messages.info(request, 'You have been logged out successfully.')
     return redirect('main:home')
+
+def rate_job(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Login required'}, status=403)
+
+    job_id = request.POST.get('job_id')
+    stars = request.POST.get('stars')
+
+    if not job_id or not stars:
+        return JsonResponse({'error': 'Invalid data'}, status=400)
+
+    try:
+        job = Job.objects.get(id=int(job_id))
+        stars = int(stars)
+    except (Job.DoesNotExist, ValueError):
+        return JsonResponse({'error': 'Invalid job or stars'}, status=400)
+
+    rating, created = JobRating.objects.update_or_create(
+        job=job,
+        user=request.user,
+        defaults={'stars': stars}
+    )
+
+    return JsonResponse({'message': 'Rating saved', 'stars': rating.stars})

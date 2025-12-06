@@ -12,6 +12,17 @@
                 <p>Thousands of jobs listed here! Your dream job is waiting.</p>
             </div>
 
+            <!-- Search Bar -->
+            <div class="jobs-search-bar">
+                <form method="GET" action="{% url 'main:jobs' %}">
+                    <input type="text" name="q" placeholder="Search jobs by title"
+                           value="{{ request.GET.q|default:'' }}">
+                    <button type="submit">
+                        <i class="fa-solid fa-magnifying-glass"></i> Search
+                    </button>
+                </form>
+            </div>
+
             {% if user.is_authenticated %}
             <div class="resume-upload-section">
                 {% if messages %}
@@ -24,7 +35,8 @@
 
                 <div class="upload-container">
                     <h3>Upload Your Resume</h3>
-                    <p>Upload your resume to get better job matches</p>
+                    <!-- <p>Upload your resume to get better job matches</p> -->
+
                     <form method="POST" enctype="multipart/form-data" class="resume-upload-form">
                         {% csrf_token %}
                         <div class="file-upload-wrapper">
@@ -47,17 +59,33 @@
     <main class="container jobs-content">
         <section class="jobs-section">
             <div class="section-header"><h2>Featured Jobs</h2></div>
+
             <div class="job-grid">
                 {% if jobs %}
                 {% for job in jobs %}
                 <div class="job-card-listing">
                     <div class="card-top"><h4>{{ job.title }}</h4></div>
+
                     <p class="company-name">{{ job.company }}</p>
+
                     <div class="tags">
-                        <span><i class="fa-solid fa-location-dot"></i> {{ job.location }}{% if job.country %}, {{ job.country }}{% endif %}</span>
+                        <span>
+                            <i class="fa-solid fa-location-dot"></i>
+                            {{ job.location }}{% if job.country %}, {{ job.country }}{% endif %}
+                        </span>
                     </div>
                     <div class="card-bottom">
                         <a href="{{ job.url }}" class="apply-btn" target="_blank" rel="noopener">Apply</a>
+                        {% if user.is_authenticated %}
+                        <!-- ⭐ STAR RATING -->
+                        <div class="job-rating" data-job-id="{{ job.id }}">
+                            <span class="star {% if job.user_rating >= 1 %}selected{% endif %}" data-value="1">&#9733;</span>
+                            <span class="star {% if job.user_rating >= 2 %}selected{% endif %}" data-value="2">&#9733;</span>
+                            <span class="star {% if job.user_rating >= 3 %}selected{% endif %}" data-value="3">&#9733;</span>
+                            <span class="star {% if job.user_rating >= 4 %}selected{% endif %}" data-value="4">&#9733;</span>
+                            <span class="star {% if job.user_rating >= 5 %}selected{% endif %}" data-value="5">&#9733;</span>                       
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}
@@ -69,37 +97,161 @@
     </main>
 </div>
 
+
+<style>
+/* --- Search Bar --- */
+.jobs-search-bar {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin: 30px 0;
+}
+
+.jobs-search-bar form {
+    width: 60%;
+    display: flex;
+    gap: 10px;
+}
+
+.jobs-search-bar input[type="text"] {
+    flex-grow: 1;
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: 1px solid #d1d5db;
+    font-size: 16px;
+    background: #f9fafb;
+}
+
+.jobs-search-bar input[type="text"]:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0px 0px 6px rgba(16,185,129,0.3);
+}
+
+.jobs-search-bar button {
+    padding: 12px 20px;
+    border: none;
+    background-color: #10b981;
+    color: white;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.jobs-search-bar button:hover {
+    background-color: #059669;
+}
+
+/* --- Footer buttons / Apply / Stars --- */
+.card-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+/* ⭐ STAR RATING */
+.job-rating {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.job-rating .star {
+    font-size: 20px;
+    cursor: pointer;
+    color: #d1d5db;
+    transition: color 0.2s ease;
+}
+
+.job-rating .star.hover,
+.job-rating .star.selected {
+    color: #fbbf24;
+}
+</style>
+
+<!-- ⭐ Rating Script -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const fileInput = document.getElementById('resume-file');
-    const fileName = document.querySelector('.file-name');
-    const uploadBtn = document.querySelector('.upload-btn');
-    const fileUploadBtn = document.querySelector('.file-upload-btn');
-    const form = document.querySelector('.resume-upload-form');
+document.querySelectorAll('.job-rating').forEach(ratingBox => {
+    const stars = ratingBox.querySelectorAll('.star');
 
-    if (fileInput && fileName && uploadBtn && form && fileUploadBtn) {
-        // Enable button after selecting file
-        fileInput.addEventListener('change', function() {
-            const file = fileInput.files[0];
-            if (file) {
-                fileName.textContent = file.name;
-                fileName.style.color = '#10b981';
-                fileUploadBtn.classList.add('file-upload-success');
-                uploadBtn.disabled = false;
-            } else {
-                fileName.textContent = 'No file selected';
-                fileName.style.color = '#e5e7eb';
-                fileUploadBtn.classList.remove('file-upload-success');
-                uploadBtn.disabled = true;
-            }
+    stars.forEach(star => {
+        star.addEventListener('mouseover', () => {
+            const val = parseInt(star.dataset.value);
+            stars.forEach(s => s.classList.toggle('hover', parseInt(s.dataset.value) <= val));
         });
 
-        // Show uploading spinner
-        form.addEventListener('submit', function() {
-            uploadBtn.disabled = true;
-            uploadBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
+        star.addEventListener('mouseout', () => {
+            stars.forEach(s => s.classList.remove('hover'));
         });
+
+        star.addEventListener('click', () => {
+            const val = parseInt(star.dataset.value);
+            stars.forEach(s => s.classList.toggle('selected', parseInt(s.dataset.value) <= val));
+        });
+    });
+});
+</script>
+<!-- enable resume upload button -->
+<script>
+document.getElementById("resume-file").addEventListener("change", function () {
+    const fileInput = this;
+    const fileNameSpan = document.querySelector(".file-name");
+    const uploadBtn = document.querySelector(".upload-btn");
+
+    if (fileInput.files.length > 0) {
+        fileNameSpan.textContent = fileInput.files[0].name;
+        uploadBtn.disabled = false;  // enable button
+    } else {
+        fileNameSpan.textContent = "No file selected";
+        uploadBtn.disabled = true;
     }
 });
 </script>
+
+<script>
+document.querySelectorAll('.job-rating').forEach(ratingBox => {
+    const stars = ratingBox.querySelectorAll('.star');
+    const jobId = ratingBox.dataset.jobId;
+
+    stars.forEach(star => {
+        star.addEventListener('mouseover', () => {
+            const val = parseInt(star.dataset.value);
+            stars.forEach(s => s.classList.toggle('hover', parseInt(s.dataset.value) <= val));
+        });
+
+        star.addEventListener('mouseout', () => {
+            stars.forEach(s => s.classList.remove('hover'));
+        });
+
+        star.addEventListener('click', () => {
+            const val = parseInt(star.dataset.value);
+
+            fetch("{% url 'main:rate_job' %}", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: new URLSearchParams({
+                    job_id: jobId,
+                    stars: val
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.stars) {
+                    stars.forEach(s => s.classList.toggle('selected', parseInt(s.dataset.value) <= data.stars));
+                }
+            });
+        });
+    });
+});
+</script>
+
+
 {% endblock %}
