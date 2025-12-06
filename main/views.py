@@ -8,6 +8,7 @@ from django.contrib.auth import logout
 import PyPDF2
 import io
 from django.db.models import Q
+from django.db.models import Avg, Count, FloatField, ExpressionWrapper, F
 
 def home_page(request):
     return render(request, 'core/home.html', {'current_page': 'home'})
@@ -115,3 +116,31 @@ def rate_job(request):
     )
 
     return JsonResponse({'message': 'Rating saved', 'stars': rating.stars})
+
+def top_jobs(request):
+    # Annotate jobs with avg rating and number of ratings
+    jobs = Job.objects.annotate(
+        avg_rating=Avg('ratings__stars'),
+        total_ratings=Count('ratings')
+    ).filter(total_ratings__gt=2)  # Only consider jobs with more than 3 ratings
+
+    # Global average rating across all jobs
+    C = JobRating.objects.aggregate(avg=Avg('stars'))['avg'] or 0
+
+    # Minimum ratings to be considered
+    m = 3
+
+    # Calculate weighted score for each job
+    for job in jobs:
+        R = job.avg_rating or 0
+        v = job.total_ratings or 0
+        job.weighted_score = (v/(v+m)) * R + (m/(v+m)) * C
+
+    # Order by weighted_score descending
+    jobs = sorted(jobs, key=lambda x: x.weighted_score, reverse=True)
+
+    return render(request, 'core/top_jobs.html', {
+        'jobs': jobs,
+        'current_page': 'top_jobs'
+    })
+

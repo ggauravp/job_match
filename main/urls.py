@@ -12,4 +12,5 @@ urlpatterns = [
     path('logout/', views.custom_logout, name='logout'),
     path('jobs/', views.jobs, name='jobs'),
     path('rate-job/', views.rate_job, name='rate_job'),
+    path('top-jobs/', views.top_jobs, name='top_jobs'),
     ]

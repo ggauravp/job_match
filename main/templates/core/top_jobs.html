@@ -1,0 +1,114 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Top Jobs{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>🔥 Top Rated Jobs</h2>
+
+    <div class="job-grid">
+        {% for job in jobs %}
+        <div class="job-card-listing">
+            <h4>{{ job.title }}</h4>
+            <p>{{ job.company }}</p>
+
+            <p>
+                ⭐ Avg Rating: {{ job.avg_rating|floatformat:1 }} / 5 <br>
+                ⭐ Weighted Score: {{ job.weighted_score|floatformat:2 }} <br>
+                👥 Ratings: {{ job.total_ratings }}
+            </p>
+
+            <a href="{{ job.url }}" target="_blank">Apply</a>
+        </div>
+        {% empty %}
+        <p>No rated jobs yet.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<style> 
+/* ---- Top Jobs Page ---- */
+
+
+
+
+.container h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 30px;
+    text-align: center;
+    color: #111827;
+}
+
+/* Job Grid */
+.job-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+/* Job Card */
+.job-card-listing {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.job-card-listing:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+}
+
+.job-card-listing h4 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: #111827;
+}
+
+.job-card-listing p {
+    font-size: 0.95rem;
+    color: #6b7280;
+    margin: 5px 0;
+}
+
+/* Rating Text */
+.job-card-listing p span {
+    font-weight: 600;
+    color: #111827;
+}
+
+/* Apply Button */
+.job-card-listing a {
+    margin-top: 15px;
+    display: inline-block;
+    background-color: #10b981;
+    color: #ffffff;
+    text-decoration: none;
+    text-align: center;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.job-card-listing a:hover {
+    background-color: #059669;
+    transform: translateY(-2px);
+}
+
+/* Empty State */
+.job-grid p {
+    text-align: center;
+    font-size: 1rem;
+    color: #6b7280;
+    grid-column: 1 / -1;
+}
+
+</style>
+{% endblock %}
