@@ -31,17 +31,6 @@ class JobPipeline:
         item["country"] = self.clean_text(item.get("country"))
         item["deadline"] = self.clean_text(item.get("deadline"))
 
-        # Skip expired deadlines
-        from datetime import datetime
-        deadline_text = item.get("deadline")
-        if deadline_text:
-            try:
-                deadline_date = datetime.strptime(deadline_text, "%b %d, %Y")
-                if deadline_date.date() < datetime.now().date():
-                    raise DropItem(f"Skipping expired job: {item['title']}")
-            except ValueError:
-                # If deadline is not a date, keep it as is
-                pass
 
         # Insert into PostgreSQL
         try:
@@ -53,7 +42,7 @@ class JobPipeline:
                 item["title"],
                 item["company"],
                 item["location"],
-                item["url"],
+                item["link"],
                 item["description"],
                 item["country"],
                 item["deadline"],

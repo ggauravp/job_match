@@ -143,4 +143,3 @@ def top_jobs(request):
         'jobs': jobs,
         'current_page': 'top_jobs'
     })
-

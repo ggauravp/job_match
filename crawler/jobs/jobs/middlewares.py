@@ -9,7 +9,7 @@ from scrapy import signals
 from itemadapter import ItemAdapter
 
 
-class PaginationSpiderMiddleware:
+class jobsSpiderMiddleware:
     # Not all methods need to be defined. If a method is not defined,
     # scrapy acts as if the spider middleware does not modify the
     # passed objects.
@@ -45,7 +45,7 @@ class PaginationSpiderMiddleware:
 
     async def process_start(self, start):
         # Called with an async iterator over the spider start() method or the
-        # maching method of an earlier spider middleware.
+        # matching method of an earlier spider middleware.
         async for item_or_request in start:
             yield item_or_request
 
@@ -53,7 +53,7 @@ class PaginationSpiderMiddleware:
         spider.logger.info("Spider opened: %s" % spider.name)
 
 
-class PaginationDownloaderMiddleware:
+class jobsDownloaderMiddleware:
     # Not all methods need to be defined. If a method is not defined,
     # scrapy acts as if the downloader middleware does not modify the
     # passed objects.

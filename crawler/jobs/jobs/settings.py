@@ -1,4 +1,4 @@
-# Scrapy settings for pagination project
+# Scrapy settings for jobs project
 #
 # For simplicity, this file contains only settings considered important or
 # commonly used. You can find more settings consulting the documentation:
@@ -7,16 +7,16 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = "pagination"
+BOT_NAME = "jobs"
 
-SPIDER_MODULES = ["pagination.spiders"]
-NEWSPIDER_MODULE = "pagination.spiders"
+SPIDER_MODULES = ["jobs.spiders"]
+NEWSPIDER_MODULE = "jobs.spiders"
 
 ADDONS = {}
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = "pagination (+http://www.yourdomain.com)"
+#USER_AGENT = "jobs (+http://www.yourdomain.com)"
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
@@ -41,13 +41,13 @@ DOWNLOAD_DELAY = 1
 # Enable or disable spider middlewares
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 #SPIDER_MIDDLEWARES = {
-#    "pagination.middlewares.PaginationSpiderMiddleware": 543,
+#    "jobs.middlewares.jobsSpiderMiddleware": 543,
 #}
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #DOWNLOADER_MIDDLEWARES = {
-#    "pagination.middlewares.PaginationDownloaderMiddleware": 543,
+#    "jobs.middlewares.jobsDownloaderMiddleware": 543,
 #}
 
 # Enable or disable extensions
@@ -59,8 +59,15 @@ DOWNLOAD_DELAY = 1
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-   "pagination.pipelines.JobPipeline": 300,
+    "jobs.pipelines.JobPipeline": 300,
 }
+
+# PostgreSQL Database Configuration
+DB_HOST = 'localhost'
+DB_NAME = 'job_recommendation'   
+DB_USER = 'postgres' 
+DB_PASSWORD = '2003' 
+DB_PORT = 5432
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
