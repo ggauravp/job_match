@@ -11,6 +11,7 @@ class JobItem(scrapy.Item):
     location = scrapy.Field()
     link = scrapy.Field()
     description = scrapy.Field()
+    qualifications = scrapy.Field()
     country = scrapy.Field()
     deadline = scrapy.Field()
     adzuna_id = scrapy.Field() 

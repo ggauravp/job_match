@@ -35,7 +35,6 @@
 
                 <div class="upload-container">
                     <h3>Upload Your Resume</h3>
-                    <!-- <p>Upload your resume to get better job matches</p> -->
 
                     <form method="POST" enctype="multipart/form-data" class="resume-upload-form">
                         {% csrf_token %}
@@ -57,14 +56,20 @@
     </section>
 
     <main class="container jobs-content">
-        <section class="jobs-section">
-            <div class="section-header"><h2>Featured Jobs</h2></div>
+
+        <!-- ================= RECOMMENDED JOBS ================= -->
+        {% if recommended_jobs %}
+        <section class="jobs-section recommended-section">
+            <div class="section-header">
+                <h2>🔥 Recommended For You</h2>
+            </div>
 
             <div class="job-grid">
-                {% if jobs %}
-                {% for job in jobs %}
+                {% for job in recommended_jobs %}
                 <div class="job-card-listing">
-                    <div class="card-top"><h4>{{ job.title }}</h4></div>
+                    <div class="card-top">
+                        <h4>{{ job.title }}</h4>
+                    </div>
 
                     <p class="company-name">{{ job.company }}</p>
 
@@ -74,16 +79,59 @@
                             {{ job.location }}{% if job.country %}, {{ job.country }}{% endif %}
                         </span>
                     </div>
+
                     <div class="card-bottom">
-                        <a href="{{ job.url }}" class="apply-btn" target="_blank" rel="noopener">Apply</a>
+                        <a href="{{ job.url }}" class="apply-btn" target="_blank" rel="noopener">
+                            Apply
+                        </a>
+
+                        <div style="font-size: 13px; color: #666;">
+                            Match Score: {{ job.similarity|floatformat:3 }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+        <!-- ================= END RECOMMENDED ================= -->
+
+
+        <!-- ================= FEATURED JOBS ================= -->
+        <section class="jobs-section">
+            <div class="section-header">
+                <h2>Featured Jobs</h2>
+            </div>
+
+            <div class="job-grid">
+                {% if jobs %}
+                {% for job in jobs %}
+                <div class="job-card-listing">
+                    <div class="card-top">
+                        <h4>{{ job.title }}</h4>
+                    </div>
+
+                    <p class="company-name">{{ job.company }}</p>
+
+                    <div class="tags">
+                        <span>
+                            <i class="fa-solid fa-location-dot"></i>
+                            {{ job.location }}{% if job.country %}, {{ job.country }}{% endif %}
+                        </span>
+                    </div>
+
+                    <div class="card-bottom">
+                        <a href="{{ job.url }}" class="apply-btn" target="_blank" rel="noopener">
+                            Apply
+                        </a>
+
                         {% if user.is_authenticated %}
-                        <!-- ⭐ STAR RATING -->
                         <div class="job-rating" data-job-id="{{ job.id }}">
                             <span class="star {% if job.user_rating >= 1 %}selected{% endif %}" data-value="1">&#9733;</span>
                             <span class="star {% if job.user_rating >= 2 %}selected{% endif %}" data-value="2">&#9733;</span>
                             <span class="star {% if job.user_rating >= 3 %}selected{% endif %}" data-value="3">&#9733;</span>
                             <span class="star {% if job.user_rating >= 4 %}selected{% endif %}" data-value="4">&#9733;</span>
-                            <span class="star {% if job.user_rating >= 5 %}selected{% endif %}" data-value="5">&#9733;</span>                       
+                            <span class="star {% if job.user_rating >= 5 %}selected{% endif %}" data-value="5">&#9733;</span>
                         </div>
                         {% endif %}
                     </div>
@@ -94,9 +142,10 @@
                 {% endif %}
             </div>
         </section>
+        <!-- ================= END FEATURED ================= -->
+
     </main>
 </div>
-
 
 <style>
 /* --- Search Bar --- */

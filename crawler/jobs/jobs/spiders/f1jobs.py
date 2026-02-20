@@ -36,26 +36,24 @@ class PagespiderSpider(scrapy.Spider):
     def parse_job_details(self, response):
         item = response.meta['item']
 
-        # 2. Extract Deadline from the detail page (Image 3)
+        # Extract Deadline
         deadline_text = response.xpath("//div[@class='deadline-div']//span[@class='small']/text()").get(default="")
         item["deadline"] = deadline_text.replace("Application Deadline:", "").strip()
 
-        # 3. Extract Description components
-        # Using .//text() inside the lists to catch all nested formatting
-        qualification = response.xpath(
-            "//h3[contains(text(),'Qualification')]/following-sibling::ul[1]/li//text()"
-        ).getall()
-
+        # Extract Job Description
         job_description = response.xpath(
             "//h3[contains(text(),'Job Description')]/following-sibling::ul[1]/li//text()"
         ).getall()
+        item["description"] = "\n".join([t.strip() for t in job_description if t.strip()])
 
+        # Extract Qualification + Required Skills
+        qualification = response.xpath(
+            "//h3[contains(text(),'Qualification')]/following-sibling::ul[1]/li//text()"
+        ).getall()
         required_skills = response.xpath(
             "//h3[contains(text(),'Required Skills')]/following-sibling::ul[1]/li//text()"
         ).getall()
-
-        # Combine and clean the text
-        combined_text = job_description + qualification + required_skills
-        item["description"] = "\n".join([t.strip() for t in combined_text if t.strip()])
+        combined_qualifications = qualification + required_skills
+        item["qualifications"] = "\n".join([t.strip() for t in combined_qualifications if t.strip()])
 
         yield item

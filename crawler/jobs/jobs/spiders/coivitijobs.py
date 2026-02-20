@@ -17,6 +17,7 @@ class JobspiderSpider(scrapy.Spider):
 
             full_title = job.xpath(".//div[contains(@class,'title')]/a/@title").get(default="").strip()
             title = full_title.split(" - ", 1)[-1] # Get text after the first " - "
+            item["title"] = title
             # Get the link to the individual job page
             link = job.xpath(".//div[contains(@class,'title')]/a/@href").get()
             item["link"] = response.urljoin(link)
@@ -38,14 +39,26 @@ class JobspiderSpider(scrapy.Spider):
     def parse_job_details(self, response):
         item = response.meta['item']
 
-        # This targets the container and grabs EVERY bit of text inside it, 
-        # whether it's in a <li>, <p>, <span>, or <div>.
-        all_text = response.xpath("//div[contains(@class, 'iCIMS_Expandable_Text')]//text()").getall()
+        # Responsibilities
+        responsibilities = response.xpath(
+            "//h2[contains(normalize-space(),'Responsibilities')]"
+            "/following-sibling::div[1]"
+            "//div[contains(@class,'iCIMS_Expandable_Container')]//text()"
+        ).getall()
 
-        # Clean up the text: strip whitespace and ignore empty strings
-        cleaned_text = [t.strip() for t in all_text if t.strip()]
+        # Qualifications
+        qualifications = response.xpath(
+            "//h2[contains(normalize-space(),'Qualifications')]"
+            "/following-sibling::div[1]"
+            "//div[contains(@class,'iCIMS_Expandable_Container')]//text()"
+        ).getall()
 
-        # Join with a space or a newline
-        item["description"] = " ".join(cleaned_text)
+        item["description"] = " ".join(
+            [t.strip() for t in responsibilities if t.strip()]
+        )
+
+        item["qualifications"] = " ".join(
+            [t.strip() for t in qualifications if t.strip()]
+        )
 
         yield item

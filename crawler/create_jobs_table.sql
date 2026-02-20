@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     location VARCHAR(255),
     link TEXT,
     description TEXT,
+    qualifications TEXT,
     country VARCHAR(100),
     deadline DATE,
     adzuna_id VARCHAR(255) UNIQUE NOT NULL,

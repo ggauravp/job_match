@@ -29,6 +29,7 @@ class Job(models.Model):
     location = models.CharField(max_length=200)
     url = models.URLField()
     description = models.TextField(null=True, blank=True)
+    qualifications = models.TextField(null=True, blank=True)
     country = models.CharField(max_length=50, null=True, blank=True)
     deadline = models.CharField(max_length=100, null=True, blank=True)
     adzuna_id = models.CharField(max_length=100, unique=True)

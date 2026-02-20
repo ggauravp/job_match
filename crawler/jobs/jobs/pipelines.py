@@ -28,6 +28,7 @@ class JobPipeline:
         item["company"] = self.clean_text(item.get("company"))
         item["location"] = self.clean_text(item.get("location"))
         item["description"] = self.clean_text(item.get("description"))
+        item["qualifications"] = self.clean_text(item.get("qualifications"))
         item["country"] = self.clean_text(item.get("country"))
         item["deadline"] = self.clean_text(item.get("deadline"))
 
@@ -35,8 +36,8 @@ class JobPipeline:
         # Insert into PostgreSQL
         try:
             self.cursor.execute("""
-                INSERT INTO main_job (title, company, location, url, description, country, deadline, adzuna_id)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO main_job (title, company, location, url, description, qualifications, country, deadline, adzuna_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (url) DO NOTHING;
             """, (
                 item["title"],
@@ -44,6 +45,7 @@ class JobPipeline:
                 item["location"],
                 item["link"],
                 item["description"],
+                item["qualifications"],
                 item["country"],
                 item["deadline"],
                 item["adzuna_id"],
