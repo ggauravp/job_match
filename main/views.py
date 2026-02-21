@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from .forms import SignupForm
 from .models import Job, JobResume, JobRating
 from django.contrib import messages
@@ -7,11 +7,10 @@ from django.contrib.auth import logout
 from django.db.models import Q, Avg, Count
 import PyPDF2
 import re
-import pandas as pd
-
-# Recommendation imports
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.preprocessing import MinMaxScaler
 
 # Load model once globally
 model = SentenceTransformer('all-MiniLM-L6-v2')
@@ -26,14 +25,12 @@ def home_page(request):
 def signup(request):
     if request.method == 'POST':
         form = SignupForm(request.POST)
-
         if form.is_valid():
             form.save()
             messages.success(request, 'Account created successfully! Please log in to continue.')
             return redirect('main:login')
     else:
         form = SignupForm()
-
     return render(request, 'core/signup.html', {
         'form': form,
         'current_page': 'signup'
@@ -53,18 +50,68 @@ def clean_text(text):
     return text.strip()
 
 
+# ================= RESUME SECTION EXTRACTION =================
+def detect_resume_sections_fixed(text):
+    sections = {
+        "profile": "",
+        "skills": "",
+        "projects": "",
+        "experience": ""
+    }
+    current = "other"
+    lines = [line.strip() for line in text.split("\n") if line.strip()]
+    headings = {
+        "profile": ["PROFILE", "SUMMARY", "ABOUT"],
+        "skills": ["SKILLS", "TECHNICAL SKILLS"],
+        "projects": ["PROJECTS"],
+        "experience": ["EXPERIENCE", "WORK EXPERIENCE", "PROFESSIONAL EXPERIENCE"]
+    }
+    for line in lines:
+        l_clean = line.upper()
+        found = False
+        for section, keys in headings.items():
+            if l_clean in keys:
+                current = section
+                found = True
+                break
+        if not found:
+            if current in sections:
+                sections[current] += " " + line
+    return {k: v.strip() for k, v in sections.items()}
+
+
+# ================= JOB DESC SPLIT =================
+def split_job_text(text):
+    desc = ""
+    qual = ""
+
+    d = re.search(r"(responsibilities|description)(.*?)(requirements|qualifications)", text, re.DOTALL)
+    q = re.search(r"(requirements|qualifications)(.*)", text, re.DOTALL)
+
+    if d:
+        desc = d.group(2)
+    if q:
+        qual = q.group(2)
+
+    return desc, qual
+
+
+# ================= VALID JOB CHECK =================
+def is_valid_job(job):
+    if not job.description or not getattr(job, 'qualifications', None):
+        return False
+    return True
+
+
 # ================= JOBS =================
 def jobs(request):
-    jobs_queryset = Job.objects.all()
 
-    # Search
+    jobs_queryset = Job.objects.all()
     query = request.GET.get('q')
     if query:
         jobs_queryset = jobs_queryset.filter(Q(title__icontains=query))
-
     jobs_queryset = jobs_queryset.order_by('?')[:20]
 
-    # Attach rating
     for job in jobs_queryset:
         job.user_rating = None
         if request.user.is_authenticated:
@@ -72,7 +119,6 @@ def jobs(request):
             if rating:
                 job.user_rating = rating.stars
 
-    # Welcome message
     if request.user.is_authenticated and not request.session.get('welcome_shown'):
         messages.info(request, f'Welcome back, {request.user.username}! Upload your resume to get better job matches.')
         request.session['welcome_shown'] = True
@@ -80,71 +126,70 @@ def jobs(request):
     recommended_jobs = []
     resume_text = None
 
-    # ================= Resume Upload / Existing Resume =================
     if request.user.is_authenticated:
-        # 1️⃣ Resume Upload
-        if request.method == 'POST' and 'resume' in request.FILES:
-            resume_file = request.FILES['resume']
-            if resume_file.name.endswith('.pdf'):
-                try:
-                    pdf_reader = PyPDF2.PdfReader(resume_file)
-                    resume_text = ""
-                    for page in pdf_reader.pages:
-                        resume_text += page.extract_text() or ""
+        existing_resume = JobResume.objects.filter(user=request.user).first()
+        if existing_resume:
+            resume_text = existing_resume.resume_text
 
-                    # Save resume in DB
-                    JobResume.objects.update_or_create(
-                        user=request.user,
-                        defaults={
-                            'resume': resume_file,
-                            'resume_text': resume_text
-                        }
-                    )
-                    messages.success(request, 'Resume uploaded successfully!')
-
-                except Exception as e:
-                    messages.error(request, f'Error processing PDF: {str(e)}')
-            else:
-                messages.error(request, 'Please upload a valid PDF file.')
-
-        # 2️⃣ If no upload, check for existing resume
-        else:
-            existing_resume = JobResume.objects.filter(user=request.user).first()
-            if existing_resume:
-                resume_text = existing_resume.resume_text
-
-    # ================= Generate Recommendations =================
+    # ================= RECOMMENDATION (EMBED PROFILE + TFIDF OTHERS) =================
     if resume_text:
         try:
             cleaned_resume = clean_text(resume_text)
+            resume_sections = detect_resume_sections_fixed(resume_text)
+            cleaned_sections = {k: clean_text(v) for k, v in resume_sections.items()}
 
-            jobs_data = []
-            for job in Job.objects.all():
-                jobs_data.append({
-                    "id": job.id,
-                    "title": job.title,
-                    "company": getattr(job, "company", ""),
-                    "location": job.location,
-                    "country": getattr(job, "country", ""),
-                    "url": getattr(job, "url", "#"),
-                    "description": job.description,
-                    "clean_desc": clean_text(job.description)
-                })
+            # Profile embedding only
+            profile_emb = model.encode(cleaned_sections["profile"])
 
-            jobs_df = pd.DataFrame(jobs_data)
-            jobs_df = jobs_df[jobs_df["clean_desc"] != ""]
+            # TF-IDF vectorizers for skills, experience, projects
+            tfidf_skills = TfidfVectorizer(ngram_range=(1,2), stop_words='english', sublinear_tf=True)
+            tfidf_exp = TfidfVectorizer(ngram_range=(1,2), stop_words='english', sublinear_tf=True)
+            tfidf_proj = TfidfVectorizer(ngram_range=(1,2), stop_words='english', sublinear_tf=True)
 
-            resume_embedding = model.encode([cleaned_resume])
-            job_embeddings = model.encode(jobs_df["clean_desc"].tolist())
+            # Prepare valid jobs
+            valid_jobs = [job for job in Job.objects.all() if is_valid_job(job)]
+            job_descs = [clean_text(split_job_text(job.description)[0]) for job in valid_jobs]
+            job_quals = [clean_text(split_job_text(job.description)[1]) for job in valid_jobs]
 
-            similarity_scores = cosine_similarity(resume_embedding, job_embeddings)[0]
-            jobs_df["similarity"] = similarity_scores
+            # TF-IDF matrices
+            skills_matrix = tfidf_skills.fit_transform([cleaned_sections["skills"]] + job_quals)
+            exp_matrix = tfidf_exp.fit_transform([cleaned_sections["experience"]] + job_quals)
+            proj_matrix = tfidf_proj.fit_transform([cleaned_sections["projects"]] + job_descs)
 
-            # Top 8 recommended jobs
-            recommended_jobs = jobs_df.sort_values(
-                by="similarity",
-                ascending=False
-            ).head(8).to_dict(orient="records")
+            scores = []
+            for idx, job in enumerate(valid_jobs):
+                desc_emb = model.encode(job_descs[idx])
+                qual_emb = model.encode(job_quals[idx])
+
+                # Profile embedding similarity
+                prof_desc_sim = cosine_similarity([profile_emb], [desc_emb])[0][0]
+                prof_qual_sim = cosine_similarity([profile_emb], [qual_emb])[0][0]
+
+                # TF-IDF similarities
+                skill_qual_sim = cosine_similarity(skills_matrix[0:1], skills_matrix[idx+1:idx+2])[0][0]
+                exp_qual_sim   = cosine_similarity(exp_matrix[0:1], exp_matrix[idx+1:idx+2])[0][0]
+                proj_desc_sim  = cosine_similarity(proj_matrix[0:1], proj_matrix[idx+1:idx+2])[0][0]
+
+                # Weighted final score
+                final_score = (
+                    0.10 * prof_desc_sim +
+                    0.05 * prof_qual_sim +
+                    0.25 * skill_qual_sim +
+                    0.50 * exp_qual_sim +
+                    0.10 * proj_desc_sim
+                )
+
+                job.similarity = final_score
+                scores.append((final_score, job))
+
+            # Scale scores 0-1
+            scaler = MinMaxScaler()
+            scaled = scaler.fit_transform([[s[0]] for s in scores])
+            for i, (_, job) in enumerate(scores):
+                job.similarity = scaled[i][0]
+
+            # Sort top 8
+            recommended_jobs = [job for _, job in sorted(scores, key=lambda x: x[0], reverse=True)[:8]]
 
         except Exception as e:
             messages.error(request, f'Error generating recommendations: {str(e)}')
@@ -171,14 +216,11 @@ def rate_job(request):
     job_id = request.POST.get('job_id')
     stars = request.POST.get('stars')
 
-    if not job_id or not stars:
-        return JsonResponse({'error': 'Invalid data'}, status=400)
-
     try:
         job = Job.objects.get(id=int(job_id))
         stars = int(stars)
-    except (Job.DoesNotExist, ValueError):
-        return JsonResponse({'error': 'Invalid job or stars'}, status=400)
+    except:
+        return JsonResponse({'error': 'Invalid data'}, status=400)
 
     rating, created = JobRating.objects.update_or_create(
         job=job,

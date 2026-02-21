@@ -63,28 +63,28 @@
             <div class="section-header">
                 <h2>🔥 Recommended For You</h2>
             </div>
-
+        
             <div class="job-grid">
                 {% for job in recommended_jobs %}
                 <div class="job-card-listing">
                     <div class="card-top">
                         <h4>{{ job.title }}</h4>
                     </div>
-
+                
                     <p class="company-name">{{ job.company }}</p>
-
+                
                     <div class="tags">
                         <span>
                             <i class="fa-solid fa-location-dot"></i>
                             {{ job.location }}{% if job.country %}, {{ job.country }}{% endif %}
                         </span>
                     </div>
-
+                
                     <div class="card-bottom">
                         <a href="{{ job.url }}" class="apply-btn" target="_blank" rel="noopener">
                             Apply
                         </a>
-
+                    
                         <div style="font-size: 13px; color: #666;">
                             Match Score: {{ job.similarity|floatformat:3 }}
                         </div>
