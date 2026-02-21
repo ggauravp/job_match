@@ -1,0 +1,44 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}PDF Format Guide{% endblock %}
+
+{% block content %}
+<section class="container" style="padding: 60px 20px; text-align:center;">
+
+    <h2 style="margin-bottom:10px;">Resume Format Guide</h2>
+    <p style="margin-bottom:30px;">
+        Please follow the resume format shown below to get better and more accurate job recommendations from our system.
+    </p>
+
+    <!-- Embedded PDF Viewer -->
+    <div style="display:flex; justify-content:center;">
+        <iframe 
+            src="{% static 'core/RESUMEUPDATED.pdf' %}" 
+            width="80%" 
+            height="600px"
+            style="border:1px solid #ccc; border-radius:10px;">
+        </iframe>
+    </div>
+
+</section>
+
+<!-- Resume Builder Section -->
+<section class="container" style="padding: 40px 20px; text-align:center;">
+
+    <h3 style="margin-bottom:10px;">Don't Have Resume in This Format?</h3>
+    <p style="margin-bottom:20px;">
+        You can create your resume in our recommended format using the website below.
+    </p>
+
+    <!-- Placeholder for your link -->
+    <a href="https://app.flowcv.com/resume/content" class="btn btn-primary" target="_blank">
+        Create Resume in Recommended Format
+    </a>
+
+    <p style="margin-top:10px; font-size:14px; color:gray;">
+        (We will redirect you to a trusted resume builder website)
+    </p>
+
+</section>
+{% endblock %}

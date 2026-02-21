@@ -13,4 +13,5 @@ urlpatterns = [
     path('jobs/', views.jobs, name='jobs'),
     path('rate-job/', views.rate_job, name='rate_job'),
     path('top-jobs/', views.top_jobs, name='top_jobs'),
+    path('pdf-guide/', views.pdf_guide, name='pdf_guide'),
     ]

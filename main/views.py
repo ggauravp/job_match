@@ -10,18 +10,16 @@ import re
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.feature_extraction.text import TfidfVectorizer
+model = SentenceTransformer('all-MiniLM-L6-v2')
 from sklearn.preprocessing import MinMaxScaler
 
-# Load model once globally
-model = SentenceTransformer('all-MiniLM-L6-v2')
 
-
-# ================= HOME =================
+#  HOME 
 def home_page(request):
     return render(request, 'core/home.html', {'current_page': 'home'})
 
 
-# ================= SIGNUP =================
+#  SIGNUP 
 def signup(request):
     if request.method == 'POST':
         form = SignupForm(request.POST)
@@ -37,7 +35,7 @@ def signup(request):
     })
 
 
-# ================= CLEAN FUNCTION =================
+#  CLEAN FUNCTION 
 def clean_text(text):
     if not isinstance(text, str):
         return ""
@@ -50,7 +48,7 @@ def clean_text(text):
     return text.strip()
 
 
-# ================= RESUME SECTION EXTRACTION =================
+#  RESUME SECTION EXTRACTION 
 def detect_resume_sections_fixed(text):
     sections = {
         "profile": "",
@@ -80,7 +78,7 @@ def detect_resume_sections_fixed(text):
     return {k: v.strip() for k, v in sections.items()}
 
 
-# ================= JOB DESC SPLIT =================
+#  JOB DESC SPLIT 
 def split_job_text(text):
     desc = ""
     qual = ""
@@ -96,14 +94,14 @@ def split_job_text(text):
     return desc, qual
 
 
-# ================= VALID JOB CHECK =================
+#  VALID JOB CHECK 
 def is_valid_job(job):
     if not job.description or not getattr(job, 'qualifications', None):
         return False
     return True
 
 
-# ================= JOBS =================
+#  JOBS 
 def jobs(request):
 
     jobs_queryset = Job.objects.all()
@@ -131,7 +129,7 @@ def jobs(request):
         if existing_resume:
             resume_text = existing_resume.resume_text
 
-    # ================= RECOMMENDATION (EMBED PROFILE + TFIDF OTHERS) =================
+    # RECOMMENDATION (EMBED PROFILE + TFIDF OTHERS) 
     if resume_text:
         try:
             cleaned_resume = clean_text(resume_text)
@@ -201,14 +199,14 @@ def jobs(request):
     })
 
 
-# ================= LOGOUT =================
+#  LOGOUT 
 def custom_logout(request):
     logout(request)
     messages.info(request, 'You have been logged out successfully.')
     return redirect('main:home')
 
 
-# ================= RATE JOB =================
+#  RATE JOB 
 def rate_job(request):
     if not request.user.is_authenticated:
         return JsonResponse({'error': 'Login required'}, status=403)
@@ -231,7 +229,7 @@ def rate_job(request):
     return JsonResponse({'message': 'Rating saved', 'stars': rating.stars})
 
 
-# ================= TOP JOBS =================
+#  TOP JOBS 
 def top_jobs(request):
     jobs = Job.objects.annotate(
         avg_rating=Avg('ratings__stars'),
@@ -251,4 +249,9 @@ def top_jobs(request):
     return render(request, 'core/top_jobs.html', {
         'jobs': jobs,
         'current_page': 'top_jobs'
+    })
+
+def pdf_guide(request):
+    return render(request, 'core/pdf_guide.html', {
+        'current_page': 'pdf_guide'
     })
