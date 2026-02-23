@@ -7,11 +7,7 @@ from django.contrib.auth import logout
 from django.db.models import Q, Avg, Count
 import PyPDF2
 import re
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.feature_extraction.text import TfidfVectorizer
-model = SentenceTransformer('all-MiniLM-L6-v2')
-from sklearn.preprocessing import MinMaxScaler
+from .job_recommender import JobRecommender
 
 
 #  HOME 
@@ -36,69 +32,8 @@ def signup(request):
 
 
 #  CLEAN FUNCTION 
-def clean_text(text):
-    if not isinstance(text, str):
-        return ""
-    text = text.lower()
-    text = re.sub(r'\S+@\S+', ' ', text)
-    text = re.sub(r'\+?\d[\d\s\-]{7,}', ' ', text)
-    text = re.sub(r'http\S+', ' ', text)
-    text = re.sub(r'[^a-z\s]', ' ', text)
-    text = re.sub(r'\s+', ' ', text)
-    return text.strip()
-
-
-#  RESUME SECTION EXTRACTION 
-def detect_resume_sections_fixed(text):
-    sections = {
-        "profile": "",
-        "skills": "",
-        "projects": "",
-        "experience": ""
-    }
-    current = "other"
-    lines = [line.strip() for line in text.split("\n") if line.strip()]
-    headings = {
-        "profile": ["PROFILE", "SUMMARY", "ABOUT"],
-        "skills": ["SKILLS", "TECHNICAL SKILLS"],
-        "projects": ["PROJECTS"],
-        "experience": ["EXPERIENCE", "WORK EXPERIENCE", "PROFESSIONAL EXPERIENCE"]
-    }
-    for line in lines:
-        l_clean = line.upper()
-        found = False
-        for section, keys in headings.items():
-            if l_clean in keys:
-                current = section
-                found = True
-                break
-        if not found:
-            if current in sections:
-                sections[current] += " " + line
-    return {k: v.strip() for k, v in sections.items()}
-
-
-#  JOB DESC SPLIT 
-def split_job_text(text):
-    desc = ""
-    qual = ""
-
-    d = re.search(r"(responsibilities|description)(.*?)(requirements|qualifications)", text, re.DOTALL)
-    q = re.search(r"(requirements|qualifications)(.*)", text, re.DOTALL)
-
-    if d:
-        desc = d.group(2)
-    if q:
-        qual = q.group(2)
-
-    return desc, qual
-
-
-#  VALID JOB CHECK 
-def is_valid_job(job):
-    if not job.description or not getattr(job, 'qualifications', None):
-        return False
-    return True
+# Note: recommendation processing lives in `main/job_recommender.py`.
+# This views module only handles web endpoints and resume upload.
 
 
 #  JOBS 
@@ -121,6 +56,30 @@ def jobs(request):
         messages.info(request, f'Welcome back, {request.user.username}! Upload your resume to get better job matches.')
         request.session['welcome_shown'] = True
 
+        # Handle resume upload
+    if request.method == 'POST' and 'resume' in request.FILES:
+        if request.user.is_authenticated:
+            resume_file = request.FILES['resume']
+            if resume_file.name.endswith('.pdf'):
+                try:
+                    pdf_reader = PyPDF2.PdfReader(resume_file)
+                    resume_text = ""
+                    for page in pdf_reader.pages:
+                        resume_text += page.extract_text() or ""
+
+                    JobResume.objects.update_or_create(
+                        user=request.user,
+                        defaults={
+                            'resume': resume_file,
+                            'resume_text': resume_text
+                        }
+                    )
+                    messages.success(request, 'Resume uploaded successfully!')
+                except Exception as e:
+                    messages.error(request, f'Error processing PDF: {str(e)}')
+            else:
+                messages.error(request, 'Please upload a valid PDF file.')
+
     recommended_jobs = []
     resume_text = None
 
@@ -129,65 +88,26 @@ def jobs(request):
         if existing_resume:
             resume_text = existing_resume.resume_text
 
-    # RECOMMENDATION (EMBED PROFILE + TFIDF OTHERS) 
-    if resume_text:
+    # Use recommender that handles DB access itself (avoid duplicate reads/processing)
+    if request.user.is_authenticated and existing_resume:
         try:
-            cleaned_resume = clean_text(resume_text)
-            resume_sections = detect_resume_sections_fixed(resume_text)
-            cleaned_sections = {k: clean_text(v) for k, v in resume_sections.items()}
+            recommender = JobRecommender()
+            recs_df = recommender.recommend(request.user.id, top_n=8, min_score=0.4)
 
-            # Profile embedding only
-            profile_emb = model.encode(cleaned_sections["profile"])
-
-            # TF-IDF vectorizers for skills, experience, projects
-            tfidf_skills = TfidfVectorizer(ngram_range=(1,2), stop_words='english', sublinear_tf=True)
-            tfidf_exp = TfidfVectorizer(ngram_range=(1,2), stop_words='english', sublinear_tf=True)
-            tfidf_proj = TfidfVectorizer(ngram_range=(1,2), stop_words='english', sublinear_tf=True)
-
-            # Prepare valid jobs
-            valid_jobs = [job for job in Job.objects.all() if is_valid_job(job)]
-            job_descs = [clean_text(split_job_text(job.description)[0]) for job in valid_jobs]
-            job_quals = [clean_text(split_job_text(job.description)[1]) for job in valid_jobs]
-
-            # TF-IDF matrices
-            skills_matrix = tfidf_skills.fit_transform([cleaned_sections["skills"]] + job_quals)
-            exp_matrix = tfidf_exp.fit_transform([cleaned_sections["experience"]] + job_quals)
-            proj_matrix = tfidf_proj.fit_transform([cleaned_sections["projects"]] + job_descs)
-
-            scores = []
-            for idx, job in enumerate(valid_jobs):
-                desc_emb = model.encode(job_descs[idx])
-                qual_emb = model.encode(job_quals[idx])
-
-                # Profile embedding similarity
-                prof_desc_sim = cosine_similarity([profile_emb], [desc_emb])[0][0]
-                prof_qual_sim = cosine_similarity([profile_emb], [qual_emb])[0][0]
-
-                # TF-IDF similarities
-                skill_qual_sim = cosine_similarity(skills_matrix[0:1], skills_matrix[idx+1:idx+2])[0][0]
-                exp_qual_sim   = cosine_similarity(exp_matrix[0:1], exp_matrix[idx+1:idx+2])[0][0]
-                proj_desc_sim  = cosine_similarity(proj_matrix[0:1], proj_matrix[idx+1:idx+2])[0][0]
-
-                # Weighted final score
-                final_score = (
-                    0.10 * prof_desc_sim +
-                    0.05 * prof_qual_sim +
-                    0.25 * skill_qual_sim +
-                    0.50 * exp_qual_sim +
-                    0.10 * proj_desc_sim
-                )
-
-                job.similarity = final_score
-                scores.append((final_score, job))
-
-            # Scale scores 0-1
-            scaler = MinMaxScaler()
-            scaled = scaler.fit_transform([[s[0]] for s in scores])
-            for i, (_, job) in enumerate(scores):
-                job.similarity = scaled[i][0]
-
-            # Sort top 8
-            recommended_jobs = [job for _, job in sorted(scores, key=lambda x: x[0], reverse=True)[:8]]
+            # Map DataFrame rows back to Job model instances preserving order
+            valid_jobs = list(Job.objects.all())
+            id_to_job = {job.id: job for job in valid_jobs}
+            recommended_jobs = []
+            for _, row in recs_df.iterrows():
+                jid = row.get('id')
+                job_obj = id_to_job.get(jid)
+                if job_obj:
+                    job_obj.similarity = float(row.get('final_score', 0.0))
+                    job_obj.skills_match = float(row.get('skills_match', 0.0))
+                    job_obj.experience_match = float(row.get('experience_match', 0.0))
+                    job_obj.profile_match = float(row.get('profile_match', 0.0))
+                    job_obj.projects_match = float(row.get('projects_match', 0.0))
+                    recommended_jobs.append(job_obj)
 
         except Exception as e:
             messages.error(request, f'Error generating recommendations: {str(e)}')
