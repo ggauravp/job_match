@@ -31,11 +31,6 @@ def signup(request):
     })
 
 
-#  CLEAN FUNCTION 
-# Note: recommendation processing lives in `main/job_recommender.py`.
-# This views module only handles web endpoints and resume upload.
-
-
 #  JOBS 
 def jobs(request):
 
@@ -75,6 +70,12 @@ def jobs(request):
                         }
                     )
                     messages.success(request, 'Resume uploaded successfully!')
+                    # Clear cached recommendations when resume is updated
+                    if 'recommendations_cache' in request.session:
+                        del request.session['recommendations_cache']
+                    if 'resume_id_cache' in request.session:
+                        del request.session['resume_id_cache']
+                    request.session.modified = True
                 except Exception as e:
                     messages.error(request, f'Error processing PDF: {str(e)}')
             else:
@@ -88,26 +89,56 @@ def jobs(request):
         if existing_resume:
             resume_text = existing_resume.resume_text
 
-    # Use recommender that handles DB access itself (avoid duplicate reads/processing)
+    # Use recommender with session-based caching to avoid recomputing on every page load
     if request.user.is_authenticated and existing_resume:
         try:
-            recommender = JobRecommender()
-            recs_df = recommender.recommend(request.user.id, top_n=8, min_score=0.4)
+            # Check if recommendations are cached for this resume
+            cached_recs = request.session.get('recommendations_cache', None)
+            cached_resume_id = request.session.get('resume_id_cache', None)
 
-            # Map DataFrame rows back to Job model instances preserving order
-            valid_jobs = list(Job.objects.all())
-            id_to_job = {job.id: job for job in valid_jobs}
+            if cached_recs and cached_resume_id == existing_resume.id:
+                # Use cached recommendations
+                recommended_jobs_data = cached_recs
+            else:
+                # Compute fresh recommendations
+                recommender = JobRecommender()
+                recs_df = recommender.recommend(request.user.id, top_n=8, min_score=0.4)
+
+                # Store recommendations in session cache
+                recommended_jobs_data = []
+                for _, row in recs_df.iterrows():
+                    recommended_jobs_data.append({
+                        'id': int(row.get('id', 0)),
+                        'title': str(row.get('title', '')),
+                        'company': str(row.get('company', '')),
+                        'final_score': float(row.get('final_score', 0.0)),
+                        'skills_match': float(row.get('skills_match', 0.0)),
+                        'experience_match': float(row.get('experience_match', 0.0)),
+                        'profile_match': float(row.get('profile_match', 0.0)),
+                        'projects_match': float(row.get('projects_match', 0.0)),
+                        'url': str(row.get('url', ''))
+                    })
+
+                request.session['recommendations_cache'] = recommended_jobs_data
+                request.session['resume_id_cache'] = existing_resume.id
+                request.session.modified = True
+
+            # Map cached data back to Job model instances with scores
+            rec_ids = [rec['id'] for rec in recommended_jobs_data]
+            
+            jobs_qs = Job.objects.filter(id__in=rec_ids)
+            id_to_job = {job.id: job for job in jobs_qs}
+            
             recommended_jobs = []
-            for _, row in recs_df.iterrows():
-                jid = row.get('id')
-                job_obj = id_to_job.get(jid)
-                if job_obj:
-                    job_obj.similarity = float(row.get('final_score', 0.0))
-                    job_obj.skills_match = float(row.get('skills_match', 0.0))
-                    job_obj.experience_match = float(row.get('experience_match', 0.0))
-                    job_obj.profile_match = float(row.get('profile_match', 0.0))
-                    job_obj.projects_match = float(row.get('projects_match', 0.0))
-                    recommended_jobs.append(job_obj)
+            for rec in recommended_jobs_data:
+                job = id_to_job.get(rec['id'])
+                if job:
+                    job.similarity = rec['final_score']
+                    job.skills_match = rec['skills_match']
+                    job.experience_match = rec['experience_match']
+                    job.profile_match = rec['profile_match']
+                    job.projects_match = rec['projects_match']
+                    recommended_jobs.append(job)
 
         except Exception as e:
             messages.error(request, f'Error generating recommendations: {str(e)}')
